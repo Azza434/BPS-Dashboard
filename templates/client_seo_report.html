@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client SEO Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Favicons (assuming these paths are correct from the original dashboard) -->
+    <link rel="icon" href="/static/images/cropped-favicon-32x32.webp" sizes="32x32" />
+    <link rel="icon" href="/static/images/cropped-favicon-192x192.webp" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/static/images/cropped-favicon-180x180.jpg" />
+    <style>
+        /* Custom styles for the Inter font and overall body */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        /* Custom styles for gradients and shadows from stock_ticker.html */
+        .header-bg {
+            background: linear-gradient(90deg, #2a2a4a 0%, #3a3a5a 100%);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .nav-button {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-button.active {
+            background: linear-gradient(45deg, #00b0ff 0%, #007bff 100%);
+            /* Blue gradient */
+            color: white;
+            box-shadow: 0 6px 15px rgba(0, 176, 255, 0.4);
+            border-color: #00b0ff;
+        }
+
+        .metric-card {
+            background: linear-gradient(145deg, #2c2c4a 0%, #3c3c5a 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            /* Ensure consistent rounded corners */
+            padding: 1.5rem;
+            text-align: center;
+            display: flex;
+            /* Use flexbox for icon and text alignment */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px) scale(1.01);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.5);
+            border-color: rgba(0, 176, 255, 0.5);
+        }
+
+        .metric-card:hover::before {
+            opacity: 1;
+        }
+
+        .metric-value {
+            font-size: 2.25rem;
+            /* text-4xl */
+            font-weight: 700;
+            /* font-bold */
+            color: white;
+            /* Changed to white for dark theme */
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            /* Subtle text shadow */
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            /* text-sm */
+            color: #a0a0a0;
+            /* Lighter gray for dark theme */
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            /* tracking-wide */
+        }
+
+        .section-header {
+            font-size: 1.875rem;
+            /* text-3xl */
+            font-weight: 700;
+            /* font-bold */
+            color: #e0e0e0;
+            /* Lighter color for dark theme */
+            margin-top: 2.5rem;
+            /* Increased top margin */
+            margin-bottom: 1.5rem;
+            text-align: center;
+            width: 100%;
+            position: relative;
+            padding-bottom: 0.75rem;
+            /* Space for the underline */
+        }
+
+        .section-header::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: 80px;
+            /* Length of the underline */
+            height: 3px;
+            background: linear-gradient(90deg, #00b0ff 0%, #007bff 100%);
+            /* Blue gradient underline */
+            border-radius: 2px;
+        }
+
+        /* Chart container styling */
+        .chart-container {
+            background: linear-gradient(145deg, #2c2c4a 0%, #3c3c5a 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+    {# Include the header.html partial #}
+    {% include 'header.html' %}
+
+    <div class="p-4 flex-grow">
+        <h1 class="text-4xl font-extrabold text-white mb-8 text-center">Client SEO Report</h1>
+
+        {# Date Picker Form #}
+        <div class="px-4 py-4 max-w-4xl mx-auto">
+            <form method="GET" action="{{ url_for('client_seo_report') }}"
+                class="flex flex-wrap items-center justify-center space-x-4 p-4 bg-gray-800/50 rounded-lg shadow-xl">
+                <div class="flex items-center space-x-2 mb-2 md:mb-0">
+                    <label for="start_date" class="text-gray-300 font-semibold">Start Date:</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ start_date.strftime('%Y-%m-%d') }}"
+                        class="bg-gray-700 text-white border border-gray-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex items-center space-x-2 mb-2 md:mb-0">
+                    <label for="end_date" class="text-gray-300 font-semibold">End Date:</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ end_date.strftime('%Y-%m-%d') }}"
+                        class="bg-gray-700 text-white border border-gray-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-300 flex items-center">
+                    <i class="fas fa-sync-alt mr-2"></i>Update Report
+                </button>
+            </form>
+        </div>
+
+        {% if error_message %}
+        <div id="error-message" class="col-span-full text-center text-red-400 bg-red-900 p-4 rounded-lg text-lg mb-4">
+            {{ error_message }}
+        </div>
+        {% endif %}
+
+        {% if metrics %}
+        <h2 class="section-header">Monthly Website Traffic</h2>
+        <div id="seo-metrics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {% set metric_formats = {
+            "GA4 Sessions": "{:,.0f}",
+            "GA4 New Users": "{:,.0f}",
+            "GA4 Total Revenue": "£{:,.2f}",
+            "Key Events": "{:,.0f}"
+            } %}
+
+            {% set seo_metrics_keys = [
+            "GA4 Sessions", "GA4 New Users", "GA4 Total Revenue", "Key Events"
+            ] %}
+
+            {% for key in seo_metrics_keys %}
+            {% if metrics[key] is defined %}
+            <div class="metric-card">
+                <div class="metric-value">
+                    {{ metric_formats[key].format(metrics[key]) }}
+                </div>
+                <div class="metric-label">{{ key | replace('GA4 ', '') | title }}</div> {# Format label #}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="col-span-full text-center text-gray-400 text-lg p-4 rounded-lg bg-gray-800">
+            No data available for the selected date range.
+        </div>
+        {% endif %}
+
+        <h2 class="section-header">Daily SEO Trends</h2>
+        <div id="daily-seo-charts" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="chart-container">
+                <canvas id="keyEventsChart" height="300px"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="totalRevenueChart" height="300px"></canvas>
+            </div>
+        </div>
+
+        <h2 class="section-header">Last 12 Months Performance</h2>
+        <div id="monthly-seo-charts" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="chart-container">
+                <canvas id="monthlySessionsChart" height="300px"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="monthlyKeyEventsChart" height="300px"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="monthlyNewUsersChart" height="300px"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="monthlyTotalRevenueChart" height="300px"></canvas>
+            </div>
+        </div>
+    </div>
+
+    {# Small script to add the 'active' class to the correct link based on the current page #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const navLinks = document.querySelectorAll('.nav-button, details a');
+            const currentPage = window.location.pathname;
+
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPage) {
+                    link.classList.add('active');
+                    if (link.classList.contains('nav-button')) {
+                        link.classList.remove('bg-gray-800', 'text-gray-300', 'border-gray-700');
+                    }
+                    if (link.closest('details')) {
+                        const summary = link.closest('details').querySelector('summary');
+                        if (summary) {
+                            summary.classList.add('active');
+                            summary.classList.remove('bg-gray-800', 'text-gray-300', 'border-gray-700');
+                        }
+                    }
+                }
+            });
+
+            // Chart.js rendering logic for SEO charts
+            const seoDailyMetrics = {{ daily_seo_metrics | tojson }};
+            const seoMonthlyMetrics = {{ monthly_seo_metrics | tojson }}; // New monthly data
+
+            const chartConfig = (ctx, label, data, borderColor, backgroundColor, valueType = 'number', comparisonData = null, isMonthly = false) => {
+                const labels = isMonthly ? seoMonthlyMetrics.map(row => {
+                    const date = new Date(row.Month);
+                    return date.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
+                }) : seoDailyMetrics.map(row => {
+                    const date = new Date(row.Date);
+                    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+                });
+
+                const datasets = [{
+                    label: label,
+                    data: data,
+                    borderColor: borderColor,
+                    backgroundColor: backgroundColor,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointBackgroundColor: borderColor,
+                    pointBorderColor: '#fff',
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: borderColor,
+                    pointHoverBorderColor: '#fff',
+                }];
+
+                if (comparisonData) {
+                    datasets.push({
+                        label: label + ' (Previous Period)',
+                        data: comparisonData,
+                        borderColor: 'rgba(169, 169, 169, 0.6)', // Grey for comparison
+                        backgroundColor: 'rgba(169, 169, 169, 0.2)',
+                        fill: false,
+                        tension: 0.4,
+                        borderDash: [5, 5], // Dashed line for comparison
+                        pointRadius: 2,
+                        pointBackgroundColor: 'rgba(169, 169, 169, 0.6)',
+                        pointBorderColor: '#fff',
+                        pointHoverRadius: 4,
+                        pointHoverBackgroundColor: 'rgba(169, 169, 169, 0.6)',
+                        pointHoverBorderColor: '#fff',
+                    });
+                }
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#e0e0e0' // Legend text color
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)' // X-axis grid lines
+                                },
+                                ticks: {
+                                    color: '#e0e0e0', // X-axis tick labels
+                                    autoSkip: true,
+                                    maxRotation: 0,
+                                    minRotation: 0
+                                }
+                            },
+                            y: {
+                                beginAtZero: true, // Start y-axis at zero
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)' // Y-axis grid lines
+                                },
+                                ticks: {
+                                    color: '#e0e0e0', // Y-axis tick labels
+                                    callback: function (value) {
+                                        if (valueType === 'currency') {
+                                            return '£' + value.toLocaleString();
+                                        }
+                                        return value.toLocaleString();
+                                    }
+                                },
+                                min: 0 // Ensure y-axis starts at zero
+                            }
+                        }
+                    }
+                });
+            };
+
+            if (seoDailyMetrics && seoDailyMetrics.length > 0) {
+                // Key Events Chart
+                const keyEventsData = seoDailyMetrics.map(row => parseFloat(row['Key Events']));
+                const keyEventsPrevPeriodData = seoDailyMetrics.map(row => parseFloat(row['Key Events Previous Period'] || 0));
+                const keyEventsCtx = document.getElementById('keyEventsChart').getContext('2d');
+                chartConfig(keyEventsCtx, 'Daily Key Events', keyEventsData, 'rgb(75, 192, 192)', 'rgba(75, 192, 192, 0.2)', 'number', keyEventsPrevPeriodData);
+
+                // Total Revenue Chart
+                const totalRevenueData = seoDailyMetrics.map(row => parseFloat(row['GA4 Total Revenue']));
+                const totalRevenuePrevPeriodData = seoDailyMetrics.map(row => parseFloat(row['GA4 Total Revenue Previous Period'] || 0));
+                const totalRevenueCtx = document.getElementById('totalRevenueChart').getContext('2d');
+                chartConfig(totalRevenueCtx, 'Daily Total Revenue', totalRevenueData, 'rgb(153, 102, 255)', 'rgba(153, 102, 255, 0.2)', 'currency', totalRevenuePrevPeriodData);
+
+            } else {
+                const dailySeoChartsContainer = document.getElementById('daily-seo-charts');
+                dailySeoChartsContainer.innerHTML = `
+                    <div class="col-span-full text-center text-gray-400 text-lg p-4 rounded-lg bg-gray-800">
+                        No daily trend data available for the selected date range.
+                    </div>
+                `;
+            }
+
+            // Monthly Charts
+            if (seoMonthlyMetrics && seoMonthlyMetrics.length > 0) {
+                // Monthly Sessions Chart
+                const monthlySessionsData = seoMonthlyMetrics.map(row => parseFloat(row['GA4 Sessions']));
+                const monthlySessionsCtx = document.getElementById('monthlySessionsChart').getContext('2d');
+                chartConfig(monthlySessionsCtx, 'Monthly Sessions', monthlySessionsData, 'rgb(255, 99, 132)', 'rgba(255, 99, 132, 0.2)', 'number', null, true);
+
+                // Monthly Key Events Chart
+                const monthlyKeyEventsData = seoMonthlyMetrics.map(row => parseFloat(row['Key Events']));
+                const monthlyKeyEventsCtx = document.getElementById('monthlyKeyEventsChart').getContext('2d');
+                chartConfig(monthlyKeyEventsCtx, 'Monthly Key Events', monthlyKeyEventsData, 'rgb(54, 162, 235)', 'rgba(54, 162, 235, 0.2)', 'number', null, true);
+
+                // Monthly New Users Chart
+                const monthlyNewUsersData = seoMonthlyMetrics.map(row => parseFloat(row['GA4 New Users']));
+                const monthlyNewUsersCtx = document.getElementById('monthlyNewUsersChart').getContext('2d');
+                chartConfig(monthlyNewUsersCtx, 'Monthly New Users', monthlyNewUsersData, 'rgb(255, 205, 86)', 'rgba(255, 205, 86, 0.2)', 'number', null, true);
+
+                // Monthly Total Revenue Chart
+                const monthlyTotalRevenueData = seoMonthlyMetrics.map(row => parseFloat(row['GA4 Total Revenue']));
+                const monthlyTotalRevenueCtx = document.getElementById('monthlyTotalRevenueChart').getContext('2d');
+                chartConfig(monthlyTotalRevenueCtx, 'Monthly Total Revenue', monthlyTotalRevenueData, 'rgb(75, 192, 192)', 'rgba(75, 192, 192, 0.2)', 'currency', null, true);
+
+            } else {
+                const monthlySeoChartsContainer = document.getElementById('monthly-seo-charts');
+                monthlySeoChartsContainer.innerHTML = `
+                    <div class="col-span-full text-center text-gray-400 text-lg p-4 rounded-lg bg-gray-800">
+                        No monthly trend data available for the last 12 months.
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+
+</html>

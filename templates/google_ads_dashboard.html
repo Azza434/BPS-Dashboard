@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Ads Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="icon" href="/static/images/cropped-favicon-32x32.webp" sizes="32x32" />
+    <link rel="icon" href="/static/images/cropped-favicon-192x192.webp" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/static/images/cropped-favicon-180x180.jpg" />
+    <style>
+        /* Custom styles for the Inter font and overall body */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        /* Custom styles for gradients and shadows from stock_ticker.html */
+        .header-bg {
+            background: linear-gradient(90deg, #2a2a4a 0%, #3a3a5a 100%);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .nav-button {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-button.active {
+            background: linear-gradient(45deg, #00b0ff 0%, #007bff 100%);
+            /* Blue gradient */
+            color: white;
+            box-shadow: 0 6px 15px rgba(0, 176, 255, 0.4);
+            border-color: #00b0ff;
+        }
+
+        .metric-card {
+            background: linear-gradient(145deg, #2c2c4a 0%, #3c3c5a 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            /* Ensure consistent rounded corners */
+            padding: 1.5rem;
+            text-align: center;
+            display: flex;
+            /* Use flexbox for icon and text alignment */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px) scale(1.01);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.5);
+            border-color: rgba(0, 176, 255, 0.5);
+        }
+
+        .metric-card:hover::before {
+            opacity: 1;
+        }
+
+        .metric-value {
+            font-size: 2.25rem;
+            /* text-4xl */
+            font-weight: 700;
+            /* font-bold */
+            color: white;
+            /* Changed to white for dark theme */
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            /* Subtle text shadow */
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            /* text-sm */
+            color: #a0a0a0;
+            /* Lighter gray for dark theme */
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            /* tracking-wide */
+        }
+
+        .section-header {
+            font-size: 1.875rem;
+            /* text-3xl */
+            font-weight: 700;
+            /* font-bold */
+            color: #e0e0e0;
+            /* Lighter color for dark theme */
+            margin-top: 2.5rem;
+            /* Increased top margin */
+            margin-bottom: 1.5rem;
+            text-align: center;
+            width: 100%;
+            position: relative;
+            padding-bottom: 0.75rem;
+            /* Space for the underline */
+        }
+
+        .section-header::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: 80px;
+            /* Length of the underline */
+            height: 3px;
+            background: linear-gradient(90deg, #00b0ff 0%, #007bff 100%);
+            /* Blue gradient underline */
+            border-radius: 2px;
+        }
+
+        /* Chart container styling */
+        .chart-container {
+            background: linear-gradient(145deg, #2c2c4a 0%, #3c3c5a 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 1.5rem;
+            background: linear-gradient(145deg, #2c2c4a 0%, #3c3c5a 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            /* Ensures rounded corners are applied to the entire table */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .data-table thead tr {
+            background: linear-gradient(90deg, #2a2a4a 0%, #3a3a5a 100%);
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+        }
+
+        .data-table th {
+            font-weight: 600;
+            /* semi-bold */
+            color: #00b0ff;
+            /* Blue color for headers */
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.875rem;
+            /* text-sm */
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tbody tr:nth-child(odd) {
+            background-color: rgba(44, 44, 74, 0.2);
+            /* Darker row for subtle striping */
+        }
+
+        .data-table tbody tr:hover {
+            background-color: rgba(0, 176, 255, 0.1);
+            /* Subtle blue hover effect */
+            transition: background-color 0.3s ease;
+        }
+
+        .data-table td {
+            font-size: 0.875rem;
+            /* text-sm */
+            color: #a0a0a0;
+        }
+
+        .data-table td:first-child {
+            font-weight: 500;
+            /* Medium font for the first column */
+            color: #e0e0e0;
+        }
+    </style>
+</head>
+
+<body>
+    {# Include the header.html partial #}
+    {% include 'header.html' %} {# Corrected include path #}
+
+    <div class="mx-auto p-4 flex-grow">
+        <h1 class="text-4xl font-extrabold text-white mb-8 text-center">Google Ads Dashboard</h1>
+
+        {# Date Picker Form #}
+        <div class="px-4 py-4 max-w-4xl mx-auto">
+            <form method="GET" action="{{ url_for('google_ads_dashboard') }}"
+                class="flex flex-wrap items-center justify-center space-x-4 p-4 bg-gray-800/50 rounded-lg shadow-xl">
+                <div class="flex items-center space-x-2 mb-2 md:mb-0">
+                    <label for="start_date" class="text-gray-300 font-semibold">Start Date:</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ start_date.strftime('%Y-%m-%d') }}"
+                        class="bg-gray-700 text-white border border-gray-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex items-center space-x-2 mb-2 md:mb-0">
+                    <label for="end_date" class="text-gray-300 font-semibold">End Date:</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ end_date.strftime('%Y-%m-%d') }}"
+                        class="bg-gray-700 text-white border border-gray-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-300 flex items-center">
+                    <i class="fas fa-sync-alt mr-2"></i>Update Report
+                </button>
+            </form>
+        </div>
+
+        {% if error_message %}
+        <div id="error-message" class="col-span-full text-center text-red-400 bg-red-900 p-4 rounded-lg text-lg mb-4">
+            {{ error_message }}
+        </div>
+        {% endif %}
+
+        {% if metrics %}
+        {# Define formatting strings for each metric type #}
+        {% set metric_formats = {
+        "impressions": "{:,.0f}",
+        "clicks": "{:,.0f}",
+        "cpc": "£{:,.2f}",
+        "cost": "£{:,.2f}",
+        "conversion_cost": "£{:,.2f}",
+        "conversions": "{:,.0f}",
+        "conversion_value": "£{:,.2f}",
+        "roas": "{:.2f}x",
+        } %}
+
+        <h2 class="section-header">Monthly Performance Data - All Campaigns</h2>
+        <div id="monthly-performance-metrics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {% set monthly_metrics_keys = [
+            "impressions", "clicks", "cpc", "cost",
+            "conversion_cost", "conversions", "conversion_value", "roas"
+            ] %}
+            {% for key in monthly_metrics_keys %}
+            {% if metrics[key] is defined %}
+            <div class="metric-card">
+                <div class="metric-value">
+                    {{ metric_formats[key].format(metrics[key]) }}
+                </div>
+                <div class="metric-label">{{ key | replace('_', ' ') | title }}</div> {# Format label #}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <h2 class="section-header">Daily Performance Trends</h2>
+        <div id="daily-charts" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="chart-container">
+                <canvas id="impressionsChart" height="300px"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="clicksChart" height="300px"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="conversionsChart" height="300px"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="costPerConversionChart" height="300px"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="conversionValueChart" height="300px"></canvas>
+            </div>
+            <div class="chart-container md:col-span-2 lg:col-span-1">
+                <canvas id="campaignConversionsChart" height="300px"></canvas>
+            </div>
+        </div>
+
+        <h2 class="section-header">Monthly Performance Data - Shopping Campaigns</h2>
+        <div id="monthly-shopping-performance-metrics"
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {% set monthly_metrics_keys = [
+            "impressions", "clicks", "cpc", "cost",
+            "conversion_cost", "conversions", "conversion_value", "roas"
+            ] %}
+            {% for key in monthly_metrics_keys %}
+            {% if shopping_metrics[key] is defined %}
+            <div class="metric-card">
+                <div class="metric-value">
+                    {{ metric_formats[key].format(shopping_metrics[key]) }}
+                </div>
+                <div class="metric-label">{{ key | replace('_', ' ') | title }}</div> {# Format label #}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <h2 class="section-header">Monthly Performance Data - Search</h2>
+        <div id="monthly-search-performance-metrics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {% set monthly_metrics_keys = [
+            "impressions", "clicks", "cpc", "cost",
+            "conversion_cost", "conversions", "conversion_value", "roas"
+            ] %}
+            {% for key in monthly_metrics_keys %}
+            {% if search_metrics[key] is defined %}
+            <div class="metric-card">
+                <div class="metric-value">
+                    {{ metric_formats[key].format(search_metrics[key]) }}
+                </div>
+                <div class="metric-label">{{ key | replace('_', ' ') | title }}</div> {# Format label #}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <h2 class="section-header">Yearly Performance Data</h2>
+        <div id="yearly-performance-metrics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {% set yearly_metrics_keys = [
+            "impressions", "clicks", "cpc", "cost",
+            "conversion_cost", "conversions", "conversion_value", "roas"
+            ] %}
+            {% for key in yearly_metrics_keys %}
+            {% if yearly_metrics[key] is defined %}
+            <div class="metric-card">
+                <div class="metric-value">
+                    {{ metric_formats[key].format(yearly_metrics[key]) }}
+                </div>
+                <div class="metric-label">{{ key | replace('_', ' ') | title }}</div> {# Format label #}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <h2 class="section-header">Campaign Performance Data</h2>
+        <div class="table-container">
+            {% if campaign_performance %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Campaign Name</th>
+                        <th>Cost</th>
+                        <th>Conversions</th>
+                        <th>Conversion Rate</th>
+                        <th>Cost Per Conversion</th>
+                        <th>Conversion Value</th>
+                        <th>Conversion Value/Cost</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for campaign in campaign_performance %}
+                    <tr>
+                        <td>{{ campaign.campaign_name }}</td>
+                        <td>£{{ "{:,.2f}".format(campaign.cost) }}</td>
+                        <td>{{ "{:,.2f}".format(campaign.conversions) }}</td>
+                        <td>{{ "{:.2f}%".format(campaign.conversion_rate * 100) }}</td>
+                        <td>£{{ "{:,.2f}".format(campaign.cost_per_conversion) }}</td>
+                        <td>£{{ "{:,.2f}".format(campaign.conversion_value) }}</td>
+                        <td>{{ "{:.2f}x".format(campaign.conversion_value_cost_ratio) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="text-center text-gray-400 text-lg p-4 rounded-lg bg-gray-800 w-full">
+                No campaign performance data available for the selected date range.
+            </div>
+            {% endif %}
+        </div>
+
+        {% else %}
+        <div class="col-span-full text-center text-gray-400 text-lg p-4 rounded-lg bg-gray-800">
+            No data available for the selected date range.
+        </div>
+        {% endif %}
+    </div>
+    {# Small script to add the 'active' class to the correct link based on the current page #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const navLinks = document.querySelectorAll('.nav-button, details a');
+            const currentPage = window.location.pathname;
+
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPage) {
+                    link.classList.add('active');
+                    if (link.classList.contains('nav-button')) {
+                        link.classList.remove('bg-gray-800', 'text-gray-300', 'border-gray-700');
+                    }
+                    if (link.closest('details')) {
+                        const summary = link.closest('details').querySelector('summary');
+                        if (summary) {
+                            summary.classList.add('active');
+                            summary.classList.remove('bg-gray-800', 'text-gray-300', 'border-gray-700');
+                        }
+                    }
+                }
+            });
+
+            // Chart.js rendering logic
+            const dailyMetrics = {{ daily_metrics | tojson
+        }}; // Data from Flask
+        const campaignConversions = {{ campaign_conversions | tojson }}; // New data from Flask
+
+        const chartConfig = (ctx, label, data, borderColor, backgroundColor, valueType = 'number', chartType = 'line') => {
+            const isBarChart = chartType === 'bar';
+            return new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: isBarChart ? campaignConversions.map(row => row.campaign) : dailyMetrics.map(row => {
+                        const date = new Date(row.day);
+                        return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+                    }),
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        borderColor: borderColor,
+                        backgroundColor: isBarChart ? backgroundColor : backgroundColor, // Solid color for bars
+                        fill: isBarChart ? false : true, // Fill only for line charts
+                        tension: isBarChart ? 0 : 0.4, // Tension only for line charts
+                        barPercentage: 0.8, // Control bar thickness
+                        categoryPercentage: 0.8 // Control spacing between categories
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#e0e0e0' // Legend text color
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)' // X-axis grid lines
+                            },
+                            ticks: {
+                                color: '#e0e0e0', // X-axis tick labels
+                                autoSkip: true, // Prevent labels from being skipped
+                                maxRotation: isBarChart ? 90 : 0, // Rotate labels for bar chart
+                                minRotation: isBarChart ? 90 : 0, // Rotate labels for bar chart
+                                font: {
+                                    size: isBarChart ? 10 : 12 // Smaller font for bar chart labels
+                                }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true, // Start y-axis at zero
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)' // Y-axis grid lines
+                            },
+                            ticks: {
+                                color: '#e0e0e0', // Y-axis tick labels
+                                callback: function (value) {
+                                    if (valueType === 'currency') {
+                                        return '£' + value.toLocaleString();
+                                    }
+                                    return value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        };
+
+        if (dailyMetrics && dailyMetrics.length > 0) {
+            // Impressions Chart
+            const impressionsData = dailyMetrics.map(row => parseFloat(row.impressions)); // Convert to number
+            const impressionsCtx = document.getElementById('impressionsChart').getContext('2d');
+            chartConfig(impressionsCtx, 'Daily Impressions', impressionsData, 'rgb(75, 192, 192)', 'rgba(75, 192, 192, 0.2)');
+
+            // Clicks Chart
+            const clicksData = dailyMetrics.map(row => parseFloat(row.clicks)); // Convert to number
+            const clicksCtx = document.getElementById('clicksChart').getContext('2d');
+            chartConfig(clicksCtx, 'Daily Clicks', clicksData, 'rgb(255, 99, 132)', 'rgba(255, 99, 132, 0.2)');
+
+            // Conversions Chart
+            const conversionsData = dailyMetrics.map(row => parseFloat(row.conversions)); // Convert to number
+            const conversionsCtx = document.getElementById('conversionsChart').getContext('2d');
+            chartConfig(conversionsCtx, 'Daily Conversions', conversionsData, 'rgb(54, 162, 235)', 'rgba(54, 162, 235, 0.2)');
+
+            // Cost Per Conversion Chart
+            const costPerConversionData = dailyMetrics.map(row => parseFloat(row.cost_per_conversion)); // Convert to number
+            const costPerConversionCtx = document.getElementById('costPerConversionChart').getContext('2d');
+            chartConfig(costPerConversionCtx, 'Daily Cost Per Conversion', costPerConversionData, 'rgb(255, 205, 86)', 'rgba(255, 205, 86, 0.2)', 'currency');
+
+            // Conversion Value Chart
+            const conversionValueData = dailyMetrics.map(row => parseFloat(row.conversion_value)); // Convert to number
+            const conversionValueCtx = document.getElementById('conversionValueChart').getContext('2d');
+            chartConfig(conversionValueCtx, 'Daily Conversion Value', conversionValueData, 'rgb(153, 102, 255)', 'rgba(153, 102, 255, 0.2)', 'currency');
+        } else {
+            const dailyChartsContainer = document.getElementById('daily-charts');
+            // Clear existing chart containers if no daily data
+            dailyChartsContainer.innerHTML = `
+                    <div class="col-span-full text-center text-gray-400 text-lg p-4 rounded-lg bg-gray-800">
+                        No daily trend data available for the selected date range.
+                    </div>
+                `;
+        }
+
+        // Conversions By Campaign Chart
+        if (campaignConversions && campaignConversions.length > 0) {
+            const campaignLabels = campaignConversions.map(row => row.campaign);
+            const campaignData = campaignConversions.map(row => parseFloat(row.conversions)); // Convert to number
+            const campaignConversionsCtx = document.getElementById('campaignConversionsChart').getContext('2d');
+            chartConfig(campaignConversionsCtx, 'Conversions By Campaign', campaignData, 'rgb(255, 159, 64)', 'rgba(255, 159, 64, 0.6)', 'number', 'bar'); // Increased opacity for bars
+        } else {
+            const campaignConversionsContainer = document.getElementById('campaignConversionsChart').closest('.chart-container');
+            if (campaignConversionsContainer) {
+                campaignConversionsContainer.innerHTML = `
+                        <div class="text-center text-gray-400 text-lg p-4 rounded-lg bg-gray-800 w-full">
+                            No campaign conversion data available for the selected date range.
+                        </div>
+                    `;
+            }
+        }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BPS Google Ads Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="icon" href="/static/images/cropped-favicon-32x32.webp" sizes="32x32" />
+    <link rel="icon" href="/static/images/cropped-favicon-192x192.webp" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/static/images/cropped-favicon-180x180.jpg" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        /* Custom styles for gradients and shadows from stock_ticker.html */
+        .header-bg {
+            background: linear-gradient(90deg, #2a2a4a 0%, #3a3a5a 100%);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .nav-button {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-button.active {
+            background: linear-gradient(45deg, #00b0ff 0%, #007bff 100%);
+            /* Blue gradient */
+            color: white;
+            box-shadow: 0 6px 15px rgba(0, 176, 255, 0.4);
+            border-color: #00b0ff;
+        }
+
+        .metric-card {
+            background: linear-gradient(145deg, #2c2c4a 0%, #3c3c5a 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            /* Ensure consistent rounded corners */
+            padding: 1.5rem;
+            text-align: center;
+            display: flex;
+            /* Use flexbox for icon and text alignment */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px) scale(1.01);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.5);
+            border-color: rgba(0, 176, 255, 0.5);
+        }
+
+        .metric-card:hover::before {
+            opacity: 1;
+        }
+
+        .metric-icon {
+            width: 48px;
+            /* Larger icon size */
+            height: 48px;
+            margin-bottom: 0.75rem;
+            /* Space between icon and value */
+            color: #00b0ff;
+            /* Icon color */
+            filter: drop-shadow(0 0 5px rgba(0, 176, 255, 0.5));
+            /* Subtle glow */
+        }
+
+        .metric-value {
+            font-size: 2.25rem;
+            /* text-4xl */
+            font-weight: 700;
+            /* font-bold */
+            color: white;
+            /* Changed to white for dark theme */
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            /* Subtle text shadow */
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            /* text-sm */
+            color: #a0a0a0;
+            /* Lighter gray for dark theme */
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            /* tracking-wide */
+        }
+
+        .section-header {
+            font-size: 1.875rem;
+            /* text-3xl */
+            font-weight: 700;
+            /* font-bold */
+            color: #e0e0e0;
+            /* Lighter color for dark theme */
+            margin-top: 2.5rem;
+            /* Increased top margin */
+            margin-bottom: 1.5rem;
+            text-align: center;
+            width: 100%;
+            position: relative;
+            padding-bottom: 0.75rem;
+            /* Space for the underline */
+        }
+
+        .section-header::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: 80px;
+            /* Length of the underline */
+            height: 3px;
+            background: linear-gradient(90deg, #00b0ff 0%, #007bff 100%);
+            /* Blue gradient underline */
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    {# Include the header.html partial #}
+    {% include 'header.html' %}
+
+    <div class="container mx-auto p-4 flex-grow">
+        <div class="px-4 py-4 max-w-4xl mx-auto">
+            <form method="GET" action="{{ url_for('index') }}"
+                class="flex items-center justify-center space-x-4 p-4 bg-gray-800/50 rounded-lg">
+                <div class="flex items-center space-x-2">
+                    <label for="start_date" class="text-gray-300 font-semibold">Start Date:</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ start_date.strftime('%Y-%m-%d') }}"
+                        class="bg-gray-700 text-white border border-gray-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="end_date" class="text-gray-300 font-semibold">End Date:</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ end_date.strftime('%Y-%m-%d') }}"
+                        class="bg-gray-700 text-white border border-gray-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                    <i class="fas fa-sync-alt mr-2"></i>Update Report
+                </button>
+            </form>
+        </div>
+        <h1 class="text-4xl font-extrabold text-white mb-8 text-center">BPS Google Ads Dashboard</h1>
+
+        {% if error_message %}
+        <div id="error-message" class="col-span-full text-center text-red-400 bg-red-900 p-4 rounded-lg text-lg mb-4">
+            {{ error_message }}
+        </div>
+        {% endif %}
+
+        {% if metrics %}
+        {# Define formatting strings for each metric type #}
+        {% set metric_formats = {
+        "Google Ads Total Cost": "£{:,.2f}",
+        "Google Ads Total Conversions": "{:,.2f}",
+        "Google Ads Total Revenue": "£{:,.2f}",
+        "Google Ads Total ROAS": "{:.2f}x",
+        "Google Ads Cost / Conversion": "£{:,.2f}",
+        "Conv. Rate": "{:.2f}%",
+        "GA4 Total Sessions": "{:,.0f}",
+        "GA4 Total Users": "{:,.0f}",
+        "Total SEO Sales": "{:,.0f}",
+        "Total GA4 SEO Revenue": "£{:,.2f}",
+        "Overall GA4 SEO Conversion Rate": "{:.2f}%",
+        "Overall SEO Cost Per Sale": "£{:,.2f}"
+        } %}
+
+        <!-- Total Monthly Performance Data (All Channels) -->
+        <h2 class="section-header">Total Monthly Performance Data (All Channels)</h2>
+        <div id="total-metrics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {% set total_metrics_keys = [
+            "Google Ads Total Cost", "Google Ads Total Conversions",
+            "Google Ads Total Revenue", "Google Ads Total ROAS"
+            ] %}
+            {% for key in total_metrics_keys %}
+            {% if metrics[key] is defined %}
+            <div class="metric-card">
+                <div class="metric-value">
+                    {# Apply multiplication for percentages directly in the template #}
+                    {% if key == "Conv. Rate" or key == "Overall GA4 SEO Conversion Rate" %}
+                    {{ metric_formats[key].format(metrics[key] * 100) }}
+                    {% else %}
+                    {{ metric_formats[key].format(metrics[key]) }}
+                    {% endif %}
+                </div>
+                <div class="metric-label">{{ key }}</div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- SEO Monthly Performance Data -->
+        <h2 class="section-header">SEO Monthly Performance Data</h2>
+        <div id="seo-metrics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {% set seo_metrics_keys = [
+            "GA4 Total Sessions", "GA4 Total Users", "Total SEO Sales",
+            "Overall GA4 SEO Conversion Rate", "Total GA4 SEO Revenue", "Overall SEO Cost Per Sale"
+            ] %}
+            {% for key in seo_metrics_keys %}
+            {% if metrics[key] is defined %}
+            <div class="metric-card">
+                <div class="metric-value">
+                    {# Apply multiplication for percentages directly in the template #}
+                    {% if key == "Conv. Rate" or key == "Overall GA4 SEO Conversion Rate" %}
+                    {{ metric_formats[key].format(metrics[key] * 100) }}
+                    {% else %}
+                    {{ metric_formats[key].format(metrics[key]) }}
+                    {% endif %}
+                </div>
+                <div class="metric-label">{{ key }}</div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Monthly AdWords Performance Data -->
+        <h2 class="section-header">Monthly AdWords Performance Data</h2>
+        <div id="adwords-metrics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {% set adwords_metrics_keys = [
+            "Google Ads Total Cost", "Google Ads Total Conversions", "Google Ads Cost / Conversion",
+            "Conv. Rate", "Google Ads Total Revenue", "Google Ads Total ROAS"
+            ] %}
+            {% for key in adwords_metrics_keys %}
+            {% if metrics[key] is defined %}
+            <div class="metric-card">
+                <div class="metric-value">
+                    {# Apply multiplication for percentages directly in the template #}
+                    {% if key == "Conv. Rate" or key == "Overall GA4 SEO Conversion Rate" %}
+                    {{ metric_formats[key].format(metrics[key] * 100) }}
+                    {% else %}
+                    {{ metric_formats[key].format(metrics[key]) }}
+                    {% endif %}
+                </div>
+                <div class="metric-label">{{ key }}</div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="col-span-full text-center text-gray-400 text-lg p-4 rounded-lg bg-gray-800">
+            No data available.
+        </div>
+        {% endif %}
+    </div>
+    {# Small script to add the 'active' class to the correct link based on the current page #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const navLinks = document.querySelectorAll('.nav-button, details a'); // Include links inside details
+            const currentPage = window.location.pathname;
+
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPage) {
+                    link.classList.add('active');
+                    // For the main nav-buttons, remove the specific background/text/border classes
+                    if (link.classList.contains('nav-button')) {
+                        link.classList.remove('bg-gray-800', 'text-gray-300', 'border-gray-700');
+                    }
+                    // If the active link is inside the "More Reports" dropdown, also highlight the summary
+                    if (link.closest('details')) {
+                        const summary = link.closest('details').querySelector('summary');
+                        if (summary) {
+                            summary.classList.add('active');
+                            summary.classList.remove('bg-gray-800', 'text-gray-300', 'border-gray-700');
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,32 @@
+<div class="flex flex-wrap justify-center gap-2">
+    <a href="/" class="nav-button bg-gray-800 text-gray-300 px-5 py-2 rounded-full border border-gray-700 text-sm font-medium whitespace-nowrap">Digital Marketing Dashboard</a>
+    <a href="/google_ads_dashboard" class="nav-button bg-gray-800 text-gray-300 px-5 py-2 rounded-full border border-gray-700 text-sm font-medium whitespace-nowrap">Google Ads Dashboard</a>
+    <a href="/client_seo_report" class="nav-button bg-gray-800 text-gray-300 px-5 py-2 rounded-full border border-gray-700 text-sm font-medium whitespace-nowrap">Client SEO Dashboard</a>
+    {# You can add more navigation items here if needed, following the same pattern #}
+</div>
+
+<script>
+// Small script to add the 'active' class to the correct link based on the current page
+document.addEventListener('DOMContentLoaded', function() {
+    const navLinks = document.querySelectorAll('.nav-button, details a'); // Include links inside details
+    const currentPage = window.location.pathname;
+
+    navLinks.forEach(link => {
+        if (link.getAttribute('href') === currentPage) {
+            link.classList.add('active');
+            // For the main nav-buttons, remove the specific background/text/border classes
+            if (link.classList.contains('nav-button')) {
+                link.classList.remove('bg-gray-800', 'text-gray-300', 'border-gray-700');
+            }
+            // If the active link is inside the "More Reports" dropdown, also highlight the summary
+            if (link.closest('details')) {
+                const summary = link.closest('details').querySelector('summary');
+                if (summary) {
+                    summary.classList.add('active');
+                    summary.classList.remove('bg-gray-800', 'text-gray-300', 'border-gray-700');
+                }
+            }
+        }
+    });
+});
+</script>
