@@ -207,6 +207,7 @@ def google_ads_dashboard():
     daily_metrics_data = []
     campaign_conversions_data = []
     campaign_performance_data = []
+    shopping_performance_data = []
     error_message = None
 
     try:
@@ -507,6 +508,48 @@ def google_ads_dashboard():
         for row in campaign_performance_results:
             campaign_performance_data.append(dict(zip(campaign_performance_column_names, row)))
 
+        # Title in products
+
+        shopping_performance_query = f"""
+        WITH DateRange AS (
+        SELECT
+            '{start_date.strftime('%Y-%m-%d')}'::date AS start_date,
+            '{end_date.strftime('%Y-%m-%d')}'::date AS end_date
+        )
+        SELECT
+        ga.product_title,
+        SUM(ga.cost_micros) / 1000000.0                                  AS cost,                     -- scaled cost
+        SUM(ga.conversions)                                              AS conversions,
+        CASE
+            WHEN SUM(ga.clicks) > 0 THEN SUM(ga.conversions)::numeric / SUM(ga.clicks)
+            ELSE 0
+        END                                                              AS conversion_rate,
+        CASE
+            WHEN SUM(ga.conversions) > 0 THEN (SUM(ga.cost_micros) / 1000000.0) / SUM(ga.conversions)
+            ELSE 0
+        END                                                              AS cost_per_conversion,
+        SUM(ga.conversions_value)                                         AS conversions_value,
+        CASE
+            WHEN SUM(ga.cost_micros) > 0 THEN
+            SUM(ga.conversions_value) / (SUM(ga.cost_micros) / 1000000.0)
+            ELSE 0
+        END                                                              AS conversion_value_cost
+        FROM
+        google_ads.google_adss AS ga
+        WHERE
+        ga.customer_id = '2026374428'
+        AND ga.date BETWEEN (SELECT start_date FROM DateRange) AND (SELECT end_date FROM DateRange)
+        GROUP BY
+        ga.product_title
+        ORDER BY
+        cost DESC;
+        """
+        cur.execute(shopping_performance_query)
+        shopping_performance_results = cur.fetchall()
+        shopping_performance_column_names = [desc[0] for desc in cur.description]
+
+        for row in shopping_performance_results:
+            shopping_performance_data.append(dict(zip(shopping_performance_column_names, row)))
 
     except Error as e:
         print(f"Error connecting to PostgreSQL or executing query: {e}")
@@ -524,6 +567,7 @@ def google_ads_dashboard():
                             yearly_metrics=dashboard_metrics_yearly,
                             campaign_conversions=campaign_conversions_data,
                             campaign_performance=campaign_performance_data,
+                            shopping_performance=shopping_performance_data,
                             start_date=start_date, end_date=end_date,
                             error_message=error_message)
 

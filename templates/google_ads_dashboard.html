@@ -407,6 +407,42 @@
             {% endif %}
         </div>
 
+        <h2 class="section-header">Shopping Performance Data</h2>
+        <div class="table-container">
+            {% if shopping_performance %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Product Title</th>
+                        <th>Cost</th>
+                        <th>Conversions</th>
+                        <th>Conversion Rate</th>
+                        <th>Cost Per Conversion</th>
+                        <th>Conversion Value</th>
+                        <th>Conversion Value/Cost</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in shopping_performance %}
+                    <tr>
+                        <td>{{ product.product_title }}</td>
+                        <td>£{{ "{:,.2f}".format(product.cost) }}</td>
+                        <td>{{ "{:,.2f}".format(product.conversions) }}</td>
+                        <td>{{ "{:.2f}%".format(product.conversion_rate * 100) }}</td>
+                        <td>£{{ "{:,.2f}".format(product.cost_per_conversion) }}</td>
+                        <td>£{{ "{:,.2f}".format(product.conversions_value) }}</td>
+                        <td>{{ "{:.2f}x".format(product.conversion_value_cost) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="text-center text-gray-400 text-lg p-4 rounded-lg bg-gray-800 w-full">
+                No campaign performance data available for the selected date range.
+            </div>
+            {% endif %}
+        </div>
+
         {% else %}
         <div class="col-span-full text-center text-gray-400 text-lg p-4 rounded-lg bg-gray-800">
             No data available for the selected date range.
