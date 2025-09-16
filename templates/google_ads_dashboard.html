@@ -406,9 +406,17 @@
             </div>
             {% endif %}
         </div>
-
         <h2 class="section-header">Shopping Performance Data</h2>
-        <div class="table-container">
+        <div class="p-4 bg-gray-900 rounded-lg shadow-md mb-4 flex items-center">
+            <input
+                type="text"
+                id="shoppingSearchInput"
+                onkeyup="filterTable()"
+                class="w-full bg-gray-800 text-gray-300 border border-gray-700 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Search for product title..."
+            />
+        </div>
+        <div id="shopping-performance-table" class="table-container">
             {% if shopping_performance %}
             <table class="data-table">
                 <thead>
@@ -593,6 +601,38 @@
             }
         }
         });
+    </script>
+    <script>
+    function filterTable() {
+        // Declare variables
+        var input, filter, table, tr, td, i, txtValue;
+        input = document.getElementById("shoppingSearchInput");
+        filter = input.value.toUpperCase();
+        
+        // Replace 'shopping-performance-table' with the actual ID of your table
+        table = document.getElementById("shopping-performance-table");
+        
+        if (!table) {
+        console.error("Table with ID 'shopping-performance-table' not found.");
+        return;
+        }
+
+        tr = table.getElementsByTagName("tr");
+
+        // Loop through all table rows, and hide those who don't match the search query
+        for (i = 0; i < tr.length; i++) {
+        // Get the cell containing the product title (assuming it's the first cell, index 0)
+        td = tr[i].getElementsByTagName("td")[0];
+        if (td) {
+            txtValue = td.textContent || td.innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            tr[i].style.display = "";
+            } else {
+            tr[i].style.display = "none";
+            }
+        }
+        }
+    }
     </script>
 </body>
 
