@@ -110,24 +110,24 @@ def index():
                 AND event_name = 'purchase'
         )
         SELECT
-            gst.total_cost AS "Google Ads Total Cost",
-            gst.total_conversions AS "Google Ads Total Conversions",
-            gst.total_revenue AS "Google Ads Total Revenue",
-            gst.total_roas AS "Google Ads Total ROAS",
+            COALESCE(gst.total_cost, 0.0) AS "Google Ads Total Cost",
+            COALESCE(gst.total_conversions, 0) AS "Google Ads Total Conversions",
+            COALESCE(gst.total_revenue, 0.0) AS "Google Ads Total Revenue",
+            COALESCE(gst.total_roas, 0.0) AS "Google Ads Total ROAS",
             CASE
-                WHEN gst.total_conversions > 0 THEN gst.total_cost / gst.total_conversions
+                WHEN COALESCE(gst.total_conversions, 0) > 0 THEN COALESCE(gst.total_cost, 0.0) / COALESCE(gst.total_conversions, 0)
                 ELSE 0.0
             END AS "Google Ads Cost / Conversion",
             CASE
-                WHEN gst.total_cost > 0 THEN gst.total_conversions::NUMERIC / gst.total_cost
+                WHEN COALESCE(gst.total_cost, 0.0) > 0 THEN COALESCE(gst.total_conversions, 0)::NUMERIC / COALESCE(gst.total_cost, 0.0)
                 ELSE 0.0
             END AS "Conv. Rate",
-            gbm.total_ga4_sessions AS "GA4 Total Sessions",
-            gbm.total_ga4_total_users AS "GA4 Total Users",
+            COALESCE(gbm.total_ga4_sessions, 0) AS "GA4 Total Sessions",
+            COALESCE(gbm.total_ga4_total_users, 0) AS "GA4 Total Users",
             COALESCE(gpm.total_seo_sales, 0) AS "Total SEO Sales",
             COALESCE(gpm.total_ga4_seo_revenue, 0) AS "Total GA4 SEO Revenue",
             CASE
-                WHEN gbm.total_ga4_sessions > 0 THEN COALESCE(gpm.total_seo_sales, 0)::NUMERIC / gbm.total_ga4_sessions
+                WHEN COALESCE(gbm.total_ga4_sessions, 0) > 0 THEN COALESCE(gpm.total_seo_sales, 0)::NUMERIC / COALESCE(gbm.total_ga4_sessions, 0)
                 ELSE 0.0
             END AS "Overall GA4 SEO Conversion Rate",
             CASE
@@ -244,7 +244,7 @@ def google_ads_dashboard():
         column_names = [desc[0] for desc in cur.description]
 
         if result:
-            dashboard_metrics = dict(zip(column_names, result))
+            dashboard_metrics = {k: (0 if v is None else v) for k, v in zip(column_names, result)}
         else:
             dashboard_metrics = {
                 "impressions": 0, "clicks": 0, "cpc": 0.0, "cost": 0.0,
@@ -292,7 +292,7 @@ def google_ads_dashboard():
         column_names = [desc[0] for desc in cur.description]
 
         if result:
-            dashboard_metrics_shopping = dict(zip(column_names, result))
+            dashboard_metrics_shopping = {k: (0 if v is None else v) for k, v in zip(column_names, result)}
         else:
             dashboard_metrics_shopping = {
                 "impressions": 0, "clicks": 0, "cpc": 0.0, "cost": 0.0,
@@ -340,7 +340,7 @@ def google_ads_dashboard():
         column_names = [desc[0] for desc in cur.description]
 
         if result:
-            dashboard_metrics_search = dict(zip(column_names, result))
+            dashboard_metrics_search = {k: (0 if v is None else v) for k, v in zip(column_names, result)}
         else:
             dashboard_metrics_search = {
                 "impressions": 0, "clicks": 0, "cpc": 0.0, "cost": 0.0,
@@ -389,7 +389,7 @@ def google_ads_dashboard():
         column_names = [desc[0] for desc in cur.description]
 
         if result:
-            dashboard_metrics_yearly = dict(zip(column_names, result))
+            dashboard_metrics_yearly = {k: (0 if v is None else v) for k, v in zip(column_names, result)}
         else:
             dashboard_metrics_yearly = {
                 "impressions": 0, "clicks": 0, "cpc": 0.0, "cost": 0.0,
