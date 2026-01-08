@@ -71,7 +71,7 @@ def index():
                     ELSE 0
                 END AS total_roas
             FROM
-                google_ads.campaign_stats cs
+                google_ads_2.campaign_stats cs
             JOIN
                 (
                     SELECT
@@ -79,7 +79,7 @@ def index():
                         name,
                         start_date,
                         ROW_NUMBER() OVER(PARTITION BY id ORDER BY start_date DESC) as rn
-                    FROM google_ads.campaign_history
+                    FROM google_ads_2.campaign_history
                 ) ch ON cs.id = ch.id AND ch.rn = 1
             WHERE
                 cs.date >= (SELECT start_date FROM DateRange)
@@ -233,7 +233,7 @@ def google_ads_dashboard():
             CASE WHEN SUM(cs.impressions) > 0 THEN SUM(cs.clicks)::NUMERIC / SUM(cs.impressions) ELSE 0 END AS ctr,
             CASE WHEN SUM(cs.clicks) > 0 THEN SUM(cs.conversions)::NUMERIC / SUM(cs.clicks) ELSE 0 END AS conv_rate
         FROM
-            google_ads.campaign_stats AS cs
+            google_ads_2.campaign_stats AS cs
         WHERE
             cs.customer_id = '2026374428'
             AND cs.date BETWEEN (SELECT start_date FROM DateRange) AND (SELECT end_date FROM DateRange);
@@ -264,7 +264,7 @@ def google_ads_dashboard():
                 id,
                 name,
                 ROW_NUMBER() OVER(PARTITION BY id ORDER BY start_date DESC) as rn
-            FROM google_ads.campaign_history
+            FROM google_ads_2.campaign_history
         )
         SELECT
             SUM(cs.impressions) AS impressions,
@@ -278,7 +278,7 @@ def google_ads_dashboard():
             CASE WHEN SUM(cs.impressions) > 0 THEN SUM(cs.clicks)::NUMERIC / SUM(cs.impressions) ELSE 0 END AS ctr,
             CASE WHEN SUM(cs.clicks) > 0 THEN SUM(cs.conversions)::NUMERIC / SUM(cs.clicks) ELSE 0 END AS conv_rate
         FROM
-            google_ads.campaign_stats AS cs
+            google_ads_2.campaign_stats AS cs
         JOIN
             LatestCampaignHistory AS ch ON cs.id = ch.id AND ch.rn = 1
         WHERE
@@ -312,7 +312,7 @@ def google_ads_dashboard():
                 id,
                 name,
                 ROW_NUMBER() OVER(PARTITION BY id ORDER BY start_date DESC) as rn
-            FROM google_ads.campaign_history
+            FROM google_ads_2.campaign_history
         )
         SELECT
             SUM(cs.impressions) AS impressions,
@@ -326,7 +326,7 @@ def google_ads_dashboard():
             CASE WHEN SUM(cs.impressions) > 0 THEN SUM(cs.clicks)::NUMERIC / SUM(cs.impressions) ELSE 0 END AS ctr,
             CASE WHEN SUM(cs.clicks) > 0 THEN SUM(cs.conversions)::NUMERIC / SUM(cs.clicks) ELSE 0 END AS conv_rate
         FROM
-            google_ads.campaign_stats AS cs
+            google_ads_2.campaign_stats AS cs
         JOIN
             LatestCampaignHistory AS ch ON cs.id = ch.id AND ch.rn = 1
         WHERE
@@ -360,7 +360,7 @@ def google_ads_dashboard():
                 id,
                 name,
                 ROW_NUMBER() OVER(PARTITION BY id ORDER BY start_date DESC) as rn
-            FROM google_ads.campaign_history
+            FROM google_ads_2.campaign_history
         )
         SELECT
             SUM(cs.impressions) AS impressions,
@@ -374,7 +374,7 @@ def google_ads_dashboard():
             CASE WHEN SUM(cs.impressions) > 0 THEN SUM(cs.clicks)::NUMERIC / SUM(cs.impressions) ELSE 0 END AS ctr,
             CASE WHEN SUM(cs.clicks) > 0 THEN SUM(cs.conversions)::NUMERIC / SUM(cs.clicks) ELSE 0 END AS conv_rate
         FROM
-            google_ads.campaign_stats AS cs
+            google_ads_2.campaign_stats AS cs
         JOIN
             LatestCampaignHistory AS ch ON cs.id = ch.id AND ch.rn = 1
         WHERE
@@ -412,7 +412,7 @@ def google_ads_dashboard():
             CASE WHEN SUM(cs.conversions) > 0 THEN SUM(cs.cost_micros) / 1000000.0 / SUM(cs.conversions) ELSE 0 END AS cost_per_conversion,
             SUM(cs.conversions_value) AS conversion_value
         FROM
-            google_ads.campaign_stats AS cs
+            google_ads_2.campaign_stats AS cs
         WHERE
             cs.customer_id = '2026374428'
             AND cs.date BETWEEN (SELECT start_date FROM DateRange) AND (SELECT end_date FROM DateRange)
@@ -439,9 +439,9 @@ def google_ads_dashboard():
             ch.name AS campaign,
             SUM(cs.conversions) AS conversions
         FROM
-            google_ads.campaign_stats AS cs
+            google_ads_2.campaign_stats AS cs
         INNER JOIN
-            google_ads.campaign_history AS ch
+            google_ads_2.campaign_history AS ch
         ON
             cs.id = ch.id
         WHERE
@@ -470,7 +470,7 @@ def google_ads_dashboard():
                 id,
                 name,
                 ROW_NUMBER() OVER(PARTITION BY id ORDER BY start_date DESC) as rn
-            FROM google_ads.campaign_history
+            FROM google_ads_2.campaign_history
         )
         SELECT
             ch.name AS campaign_name,
@@ -490,7 +490,7 @@ def google_ads_dashboard():
                 ELSE 0
             END AS conversion_value_cost_ratio
         FROM
-            google_ads.campaign_stats AS cs
+            google_ads_2.campaign_stats AS cs
         JOIN
             LatestCampaignHistory AS ch ON cs.id = ch.id AND ch.rn = 1
         WHERE
@@ -535,7 +535,7 @@ def google_ads_dashboard():
             ELSE 0
         END                                                              AS conversion_value_cost
         FROM
-        google_ads.google_adss AS ga
+        google_ads_2.google_adss AS ga
         WHERE
         ga.customer_id = '2026374428'
         AND ga.date BETWEEN (SELECT start_date FROM DateRange) AND (SELECT end_date FROM DateRange)
